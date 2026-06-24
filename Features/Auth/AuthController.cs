@@ -10,23 +10,23 @@ namespace Nexus.Features.Auth;
 
 [ApiController]
 [Route("auth")]
-public class AuthController : ControllerBase
+public class AuthController(
+    IDbAuthService dbAuthService,
+    ICurrentUser currentUser) : ControllerBase
 {
-    private readonly IAuthService _authService;
-    private readonly ICurrentUser _currentUser;
-    
-    public AuthController(IAuthService authService,
-        ICurrentUser currentUser)
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
+    [HttpPost("anonymous")]
+    public async Task<ActionResult<AuthResponse>> Anonymous([FromBody]AnonymousRequest request)
     {
-        _authService = authService;
-        _currentUser = currentUser;
+        var response = await dbAuthService.Anonymous(request);
+        return Ok(response);
     }
-
+    
     [EnableRateLimiting(RateLimitPolicies.Auth)]
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponse>> Login([FromBody]LoginRequest request)
     {
-        var response = await _authService.Login(request);
+        var response = await dbAuthService.Login(request);
         return Ok(response);
     }
     
@@ -34,8 +34,26 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponse>> Register([FromBody]RegisterRequest request)
     {
-        var response = await _authService.Register(request);
+        var response = await dbAuthService.Register(request);
         return Ok(response);
+    }
+    
+    [EnableRateLimiting(RateLimitPolicies.Writes)]
+    [HttpPost("refresh")]
+    [Authorize]
+    public async Task<ActionResult<AuthResponse>> Refresh([FromBody]RefreshRequest request)
+    {
+        var response = await dbAuthService.Refresh(request);
+        return Ok(response);
+    }
+    
+    [EnableRateLimiting(RateLimitPolicies.Writes)]
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<ActionResult<AuthResponse>> Logout([FromBody]LogoutRequest request)
+    {
+        await dbAuthService.Logout(request);
+        return Ok();
     }
 
     [EnableRateLimiting(RateLimitPolicies.Reads)]
@@ -45,8 +63,8 @@ public class AuthController : ControllerBase
     {
         return Ok(new UserResponse
         {
-            UserId = _currentUser.UserId,
-            Username  = _currentUser.Username,
+            UserId = currentUser.UserId,
+            Username  = currentUser.Username,
         });
     }
 }

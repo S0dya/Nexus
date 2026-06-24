@@ -18,7 +18,7 @@ builder.Services
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
+var port = Environment.GetEnvironmentVariable("PORT") ?? "10001";
 
 builder.WebHost.UseUrls($"http://*:{port}");
 

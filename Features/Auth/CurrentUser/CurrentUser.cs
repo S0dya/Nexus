@@ -2,20 +2,13 @@ using System.Security.Claims;
 
 namespace Nexus.Features.Auth.CurrentUser;
 
-public class CurrentUser : ICurrentUser
+public class CurrentUser(IHttpContextAccessor accessor) : ICurrentUser
 {
-    private IHttpContextAccessor _accessor;
-    
-    public CurrentUser(IHttpContextAccessor accessor)
-    {
-        _accessor = accessor;
-    }
-
     public Guid UserId
     {
         get
         {
-            var claim = _accessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var claim = accessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (claim == null) throw new UnauthorizedAccessException("UserId is not authenticated");
 
@@ -27,7 +20,7 @@ public class CurrentUser : ICurrentUser
     {
         get
         {
-            var claim = _accessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
+            var claim = accessor.HttpContext?.User.FindFirst(ClaimTypes.Name)?.Value;
 
             if (claim == null) throw new UnauthorizedAccessException("User Name is not authenticated");
 
@@ -35,6 +28,19 @@ public class CurrentUser : ICurrentUser
         }
     }
 
-    public bool IsAuthenticated => _accessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
+
+    public string UserRole
+    {
+        get
+        {
+            var claim = accessor.HttpContext?.User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (claim == null) throw new UnauthorizedAccessException("User Role is not authenticated");
+
+            return claim;
+        }
+    }
+
+    public bool IsAuthenticated => accessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
 }

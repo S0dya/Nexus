@@ -6,7 +6,7 @@ public class UserEntity
 {
     public Guid Id { get; set; }
     [MaxLength(100)]
-    public string UserEmail { get; set; }
+    public string? UserEmail { get; set; }
     [MaxLength(50)]
     public string Username { get; set; }
     public string PasswordHash { get; set; }
@@ -16,6 +16,7 @@ public class UserEntity
 
 public enum UserRole
 {
+    Guest,
     User,
     Admin,
 }

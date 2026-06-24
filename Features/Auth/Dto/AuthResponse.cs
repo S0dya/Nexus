@@ -2,5 +2,6 @@ namespace Nexus.Features.Auth.Dto;
 
 public class AuthResponse
 {
-    public string Token { get; set; }
+    public string AccessToken { get; set; }
+    public string RefreshToken { get; set; }
 }
