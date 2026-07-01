@@ -1,0 +1,34 @@
+info:
+  name: Register
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/register"
+  body:
+    type: json
+    data: |-
+      {
+          "username":"{{userName}}",
+          "password":"{{password}}",
+          "deviceId":"{{deviceId}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        bru.setEnvVar("userName", `user-${Date.now()}`);
+        bru.setEnvVar("password", `${Date.now()}Password`);
+    - type: after-response
+      code: |-
+        bru.setEnvVar("accessToken", res.body.accessToken);
+        bru.setEnvVar("refreshToken", res.body.refreshToken);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,3 +1,5 @@
+
+
 namespace Nexus.Infrastructure.DependencyInjection;
 
 public static class SwaggerInjection

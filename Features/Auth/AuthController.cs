@@ -37,6 +37,14 @@ public class AuthController(
         var response = await dbAuthService.Register(request);
         return Ok(response);
     }
+    [EnableRateLimiting(RateLimitPolicies.Auth)]
+    [HttpPost("link-account")]
+    [Authorize]
+    public async Task<ActionResult<AuthResponse>> LinkAccount([FromBody]RegisterRequest request)
+    {
+        var response = await dbAuthService.LinkAccount(request);
+        return Ok(response);
+    }
     
     [EnableRateLimiting(RateLimitPolicies.Writes)]
     [HttpPost("refresh")]
@@ -58,13 +66,14 @@ public class AuthController(
 
     [EnableRateLimiting(RateLimitPolicies.Reads)]
     [Authorize]
-    [HttpGet("get-current-user")]
+    [HttpGet("me")]
     public ActionResult<UserResponse> Me()
     {
         return Ok(new UserResponse
         {
             UserId = currentUser.UserId,
-            Username  = currentUser.Username,
+            Username = currentUser.Username,
+            // Role = currentUser.UserRole
         });
     }
 }

@@ -2,6 +2,8 @@ using Nexus.Features.Auth.CurrentUser;
 using Nexus.Features.Auth.Jwt;
 using Nexus.Features.Auth.Services;
 using Nexus.Features.Auth.Validation;
+using Nexus.Features.Profile.Services;
+using Nexus.Features.Registration.Services;
 using Nexus.Infrastructure.Security;
 using Nexus.Options;
 
@@ -14,11 +16,16 @@ public static class ProjectInjection
         services.Configure<JwtOptions>(configuration.GetSection("Jwt"));
         services.Configure<DeviceOptions>(configuration.GetSection("DeviceSettings"));
         services.Configure<ProjectSettingsOptions>(configuration.GetSection("ProjectSettings"));
+        services.Configure<ProfileOptions>(configuration.GetSection("ProfileSettings"));
 
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<ICurrentUser, CurrentUser>();
-        services.AddScoped<IDbAuthService, DbAuthService>();
         services.AddScoped<IPasswordValidation, PasswordValidation>();
+        services.AddScoped<IDeviceFactory, DeviceFactory>();
+        
+        services.AddScoped<IDbAuthService, DbAuthService>();
+        services.AddScoped<IProfileService, DbProfileService>();
+        services.AddScoped<IAccountRegistrationService, DbAccountRegistrationService>();
         
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 

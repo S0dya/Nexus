@@ -1,0 +1,36 @@
+info:
+  name: linkAccount
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/link-account"
+  body:
+    type: json
+    data: |-
+      {
+          "username":"{{userName}}",
+          "password":"{{password}}",
+          "deviceId":"{{deviceId}}"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        bru.setEnvVar("userName", `user-${Date.now()}`);
+        bru.setEnvVar("password", `${Date.now()}Password`);
+    - type: after-response
+      code: |-
+        bru.setEnvVar("accessToken", res.body.accessToken);
+        bru.setEnvVar("refreshToken", res.body.refreshToken);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

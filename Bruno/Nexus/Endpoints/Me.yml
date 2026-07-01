@@ -1,0 +1,22 @@
+info:
+  name: Me
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/auth/me"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setEnvVar("userName", res.body.username);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

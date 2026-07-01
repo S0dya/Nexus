@@ -9,6 +9,8 @@ using Nexus.Features.Auth.Domain;
 using Nexus.Features.Auth.Dto;
 using Nexus.Features.Auth.Jwt;
 using Nexus.Features.Auth.Validation;
+using Nexus.Features.Registration.Dto;
+using Nexus.Features.Registration.Services;
 using Nexus.Infrastructure.Security;
 using Nexus.Options;
 using LoginRequest = Nexus.Features.Auth.Dto.LoginRequest;
@@ -24,30 +26,25 @@ public class DbAuthService(
     IOptions<DeviceOptions> deviceOptions,
     IPasswordValidation passwordValidation,
     IPasswordHasher passwordHasher,
-    ICurrentUser currentUser)
+    ICurrentUser currentUser,
+    IAccountRegistrationService accountRegistrationService,
+    IDeviceFactory deviceFactory)
     : IDbAuthService
 {
     private readonly DeviceOptions _deviceOptions = deviceOptions.Value;
     
     public async Task<AuthResponse> Anonymous(AnonymousRequest request)
     {
-        var newUser = new UserEntity()
+        var result = await accountRegistrationService.CreateAccount(new AccountRegistrationRequest()
         {
-            Id = Guid.NewGuid(),
-            UserEmail = null,
             Username = $"guest-{Guid.NewGuid().ToString("N")[..8]}",
+            UserEmail = null,
             PasswordHash = "",
-            UserRole = UserRole.Guest,
-            CreatedAt = DateTime.UtcNow,
-        };
+            DeviceId = request.DeviceId,
+            UserRole = UserRole.Guest
+        });
         
-        var newDevice = CreateDevice(newUser.Id, request.DeviceId);
-        
-        db.Users.Add(newUser);
-        db.Devices.Add(newDevice);
-        await db.SaveChangesAsync();
-
-        return CreateAuthResponse(newUser, newDevice);
+        return CreateAuthResponse(result.User, result.Device);
     }
 
     public async Task<AuthResponse> Login(LoginRequest request)
@@ -77,7 +74,7 @@ public class DbAuthService(
         {
             logger.LogInformation("Creating new device for user {UserId}", existingUser.Id);
 
-            var newDevice = CreateDevice(existingUser.Id, request.DeviceId);
+            var newDevice = deviceFactory.CreateDevice(existingUser.Id, request.DeviceId, _deviceOptions.ExpiryDays);
             
             db.Devices.Add(newDevice);
 
@@ -99,7 +96,7 @@ public class DbAuthService(
     public async Task<AuthResponse> Register(RegisterRequest request)
     {
         logger.LogInformation("Registration attempt for username {Username}", request.Username);
-
+        
         passwordValidation.ValidatePassword(request.Password);
         
         var existingLoggedUser = await db.Users.FirstOrDefaultAsync(user => user.Username == request.Username);
@@ -110,16 +107,42 @@ public class DbAuthService(
             throw new AuthenticationException("User Already Exists");
         }
 
+        var result = await accountRegistrationService.CreateAccount(new AccountRegistrationRequest()
+        {
+            Username = request.Username,
+            UserEmail = "@" + request.Username,
+            PasswordHash = passwordHasher.HashPassword(request.Password),
+            DeviceId = request.DeviceId,
+            UserRole = UserRole.User
+        });
+        
+        return CreateAuthResponse(result.User, result.Device);
+    }
+
+    public async Task<AuthResponse> LinkAccount(RegisterRequest request)
+    {
+        logger.LogInformation("LinkAccount attempt for username {Username}", request.Username);
+
+        passwordValidation.ValidatePassword(request.Password);
+        
+        var existingLoggedUser = await db.Users.FirstOrDefaultAsync(user => user.Username == request.Username);
+
+        if (existingLoggedUser != null)
+        {
+            logger.LogWarning("LinkAccount failed for username {Username}: user already exists", request.Username);
+            throw new AuthenticationException("User Already Exists");
+        }
+
         var existingGuestUser = await db.Users.FirstOrDefaultAsync(user => user.Id == currentUser.UserId);
         
         if (existingGuestUser == null)
         {
-            logger.LogWarning("Registration failed for guest as they dont exist");
+            logger.LogWarning("LinkAccount failed for guest as they dont exist");
             throw new AuthenticationException("User Doesn't Exist");
         }
         if (existingGuestUser.UserRole != UserRole.Guest)
         {
-            logger.LogWarning("Registration failed for guest as they are not guest");
+            logger.LogWarning("LinkAccount failed for guest as they are not guest");
             throw new AuthenticationException("User Already Registered");
         }
         
@@ -128,7 +151,7 @@ public class DbAuthService(
         existingGuestUser.Username = request.Username;
         existingGuestUser.PasswordHash = passwordHasher.HashPassword(request.Password);
 
-        logger.LogInformation("Registration succeeded for user {UserId}", existingGuestUser.Id);
+        logger.LogInformation("LinkAccount succeeded for user {UserId}", existingGuestUser.Id);
         
         var existingDevice = await db.Devices.FirstOrDefaultAsync(device => 
             device.UserId == existingGuestUser.Id 
@@ -136,7 +159,7 @@ public class DbAuthService(
         
         if (existingDevice == null)
         {
-            logger.LogWarning("Registration failed for guest as they dont exist");
+            logger.LogWarning("LinkAccount failed for guest as they dont exist");
             throw new AuthenticationException("Device Doesn't Exist");
         }
         
@@ -145,7 +168,7 @@ public class DbAuthService(
         await db.SaveChangesAsync();
         
         return CreateAuthResponse(existingGuestUser, existingDevice);
-    }
+    } 
     
     public async Task<AuthResponse> Refresh(RefreshRequest request)
     {
@@ -207,20 +230,6 @@ public class DbAuthService(
                 UserRole = user.UserRole,
             }),
             RefreshToken = device.RefreshToken,
-        };
-    }
-
-    private DeviceEntity CreateDevice(Guid userId, string deviceId)
-    {
-        return new DeviceEntity()
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            RefreshToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-            DeviceId = deviceId,
-            CreatedAt = DateTime.UtcNow,
-            LastSeenAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddDays(_deviceOptions.ExpiryDays),
         };
     }
 }

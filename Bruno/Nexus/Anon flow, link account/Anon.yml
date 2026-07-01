@@ -1,0 +1,28 @@
+info:
+  name: Anon
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/anonymous"
+  body:
+    type: json
+    data: |-
+      {
+          "deviceId": "{{deviceId}}"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        bru.setEnvVar("accessToken", res.body.accessToken);
+        bru.setEnvVar("refreshToken", res.body.refreshToken);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
