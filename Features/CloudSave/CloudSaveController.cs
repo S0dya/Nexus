@@ -30,11 +30,11 @@ public class CloudSaveController(ICloudSaveService cloudSaveService) : Controlle
     }
 
     [EnableRateLimiting(RateLimitPolicies.Writes)]
-    [HttpDelete("me")]
+    [HttpPost("me")]
     [Authorize]
-    public async Task<ActionResult> DeleteSave()
+    public async Task<ActionResult> ResetSave()
     {
-        await cloudSaveService.DeleteSave();
+        await cloudSaveService.ResetSave();
         return Ok();
     }
 }

@@ -6,5 +6,5 @@ public interface ICloudSaveService
 {
     Task<SaveDataResponse> SaveData(SaveDataRequest request);
     Task<LoadDataResponse> LoadData();
-    Task DeleteSave();
+    Task ResetSave();
 }

@@ -5,6 +5,8 @@ using Nexus.Features.Auth.Domain;
 using Nexus.Features.Auth.Dto;
 using Nexus.Features.Auth.Jwt;
 using Nexus.Features.Auth.Services;
+using Nexus.Features.CloudSave.Domain;
+using Nexus.Features.CloudSave.Services;
 using Nexus.Features.Profile.Domain;
 using Nexus.Features.Profile.Dto;
 using Nexus.Features.Registration.Dto;
@@ -17,7 +19,8 @@ public class DbAccountRegistrationService(
     IOptions<ProfileOptions> profileOptions,
     AppDbContext db,
     ILogger<DbAccountRegistrationService> logger,
-    IDeviceFactory deviceFactory
+    IDeviceFactory deviceFactory,
+    ICloudSaveFactory cloudSaveFactory
     ) : IAccountRegistrationService
 {
     private readonly DeviceOptions _deviceOptions = deviceOptions.Value;
@@ -27,7 +30,7 @@ public class DbAccountRegistrationService(
     {
         logger.LogInformation("Account creation attempt");
         
-        var newUser = new UserEntity()
+        var newUser = new UserEntity
         {
             Id = Guid.NewGuid(),
             UserEmail = request.UserEmail,
@@ -39,7 +42,7 @@ public class DbAccountRegistrationService(
         
         var newDevice = deviceFactory.CreateDevice(newUser.Id, request.DeviceId, _deviceOptions.ExpiryDays);
         
-        var newProfile = new ProfileEntity()
+        var newProfile = new ProfileEntity
         {
             UserId = newUser.Id,
             DisplayName = "",
@@ -52,9 +55,12 @@ public class DbAccountRegistrationService(
             LastOnline = DateTime.UtcNow,
         };
 
+        var newCloudSave = cloudSaveFactory.CreateCloudSave(newUser.Id);
+
         db.Users.Add(newUser);
         db.Profiles.Add(newProfile);
         db.Devices.Add(newDevice);
+        db.CloudSaves.Add(newCloudSave);
         await db.SaveChangesAsync();
         
         logger.LogInformation("Account creation succeeded for user {UserId}", newUser.Id);

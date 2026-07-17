@@ -23,12 +23,13 @@ public static class ProjectInjection
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IPasswordValidation, PasswordValidation>();
         services.AddScoped<IDeviceFactory, DeviceFactory>();
+        services.AddScoped<ICloudSaveFactory, CloudSaveFactory>();
         
         services.AddScoped<IDbAuthService, DbAuthService>();
         services.AddScoped<IProfileService, DbProfileService>();
         services.AddScoped<IAccountRegistrationService, DbAccountRegistrationService>();
         services.AddScoped<IUserActivityService, DbUserActivityService>();
-        services.AddScoped<ICloudSaveService, CloudSaveService>();
+        services.AddScoped<ICloudSaveService, DbCloudSaveService>();
         
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 
