@@ -75,7 +75,7 @@ public class DbProfileService(
                 throw new ValidationException("Icon id exceeds maximum allowed value");
             }
             
-            existingProfile.IconId = request.IconId;
+            existingProfile.IconId = request.IconId.Value;
         }
 
         if (request.Bio != null)

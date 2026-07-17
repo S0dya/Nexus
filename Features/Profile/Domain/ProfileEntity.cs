@@ -9,7 +9,7 @@ public class ProfileEntity
     public Guid UserId { get; set; }
     [MaxLength(100)]
     public string DisplayName { get; set; }
-    public int? IconId { get; set; }
+    public int IconId { get; set; }
     [MaxLength(500)]
     public string? Bio { get; set; }
     [MaxLength(100)]

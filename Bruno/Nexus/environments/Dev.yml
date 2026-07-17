@@ -12,3 +12,9 @@ variables:
     value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM0MTcxMTZkLWM2YmYtNDIxOC1iYzkwLWQ0YTYyOWFiOThjNSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJ1c2VyLTE3ODI3NjM1NzM2NDciLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJVc2VyIiwiZXhwIjoxNzgyNzY3MTczLCJpc3MiOiJuZXh1cyIsImF1ZCI6IkdhbWVDbGllbnQifQ.KMPUE7sjSnjZw3VjMpMDgwIztp9BYXQKZ0X015o7CUg
   - name: refreshToken
     value: URgy/w3YxmAyM9Gq4HE2EqoX1HPSMHM82IEG3lkFUHtnhX6mq4Y8JtfyS+r2naFK6FM8wGwjCKMz0fVH8Y2ZDw==
+  - name: iconId
+    value: "2"
+  - name: bio
+    value: dldldl
+  - name: userIdToGet
+    value: ""

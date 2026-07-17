@@ -1,76 +1,56 @@
 using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Authentication;
+using Nexus.Infrastructure.Exceptions;
 
 namespace Nexus.Middlewares;
 
-public class GlobalExceptionMiddleware
+public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<GlobalExceptionMiddleware> _logger;
-
-    public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
     public async Task InvokeAsync(HttpContext context)
     {
         var traceId = context.TraceIdentifier;
         var path = context.Request.Path;
         var method = context.Request.Method;
         
-        using (_logger.BeginScope(new Dictionary<string, object>
+        using (logger.BeginScope(new Dictionary<string, object>
                {
                    ["TraceId"] = traceId
                }))
         {
-            _logger.LogInformation("Request started {Method} {Path}", method, path);
+            // logger.LogInformation("Request started {Method} {Path}", method, path);
 
             try
             {
-                await _next(context);
+                await next(context);
 
-                _logger.LogInformation("Request finished {Method} {Path} StatusCode {StatusCode}", method, path, context.Response.StatusCode);
+                logger.LogInformation("Request finished {Method} {Path} StatusCode {StatusCode}", method, path, context.Response.StatusCode);
             }
-            catch (ArgumentOutOfRangeException ex)
+            catch (ApiException ex)
             {
-                _logger.LogWarning(ex, "Validation error occurred");
-                await HandleExceptionAsync(context, HttpStatusCode.BadRequest, ex.Message);
-            }
-            catch (ArgumentException ex)
-            {
-                _logger.LogWarning(ex, "Argument error occurred");
-                await HandleExceptionAsync(context, HttpStatusCode.BadRequest, ex.Message);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                _logger.LogInformation(ex, "Resource not found");
-                await HandleExceptionAsync(context, HttpStatusCode.NotFound, ex.Message);
-            }
-            catch (AuthenticationFailureException ex)
-            {
-                _logger.LogInformation(ex, "Auth Failed");
-                await HandleExceptionAsync(context, HttpStatusCode.Unauthorized, ex.Message);
+                logger.LogWarning(ex, "Api error occurred on {Method} {Path}", method, path);
+                context.Response.StatusCode = ex.StatusCode;
+                await HandleExceptionAsync(context, ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled exception occurred");
-                await HandleExceptionAsync(context, HttpStatusCode.InternalServerError, "Internal server error");
+                logger.LogWarning(ex, "Unhandled exception occurred on {Method} {Path}", method, path);
+                context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                await HandleExceptionAsync(context, "Internal server error");
             }
         }
     }
     
-    private static async Task HandleExceptionAsync(HttpContext context, HttpStatusCode statusCode, string message)
+    private static async Task HandleExceptionAsync(HttpContext context, string message)
     {
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)statusCode;
 
         var response = new
         {
             error = message,
-            status = (int)statusCode,
+            status = context.Response.StatusCode,
+            traceId = context.TraceIdentifier,
+            path = context.Request.Path,
+            timestamp = DateTime.UtcNow,
         };
 
         var json = JsonSerializer.Serialize(response);

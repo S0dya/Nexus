@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using Nexus.Features.Auth.CurrentUser;
 using Nexus.Features.Profile.Dto;
 using Nexus.Features.Profile.Services;
 using Nexus.Infrastructure.DependencyInjection.RateLimiting;

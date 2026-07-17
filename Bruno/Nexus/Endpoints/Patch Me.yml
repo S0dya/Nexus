@@ -1,0 +1,26 @@
+info:
+  name: Patch Me
+  type: http
+  seq: 9
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/profile/me"
+  body:
+    type: json
+    data: |-
+      {
+          "name":"{{userName}} 123",
+          "iconId":"{{iconId}}",
+          "bio":"{{$randomAdjective}}",
+          "country":"{{$randomCountry}}"
+      }
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

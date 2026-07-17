@@ -46,6 +46,8 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<LastOnlineMiddleware>();
+
 app.MapControllers();
 
 app.Run();
