@@ -3,6 +3,7 @@ using Nexus.Features.Auth.Jwt;
 using Nexus.Features.Auth.Services;
 using Nexus.Features.Auth.Validation;
 using Nexus.Features.CloudSave.Services;
+using Nexus.Features.Leaderboard.Services;
 using Nexus.Features.Profile.Services;
 using Nexus.Features.Registration.Services;
 using Nexus.Infrastructure.Security;
@@ -30,6 +31,7 @@ public static class ProjectInjection
         services.AddScoped<IAccountRegistrationService, DbAccountRegistrationService>();
         services.AddScoped<IUserActivityService, DbUserActivityService>();
         services.AddScoped<ICloudSaveService, DbCloudSaveService>();
+        services.AddScoped<ILeaderboardService, DbLeaderboardService>();
         
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 
