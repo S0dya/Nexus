@@ -18,8 +18,11 @@ public class DbLeaderboardService(
     
     public async Task<SubmitScoreResponse> SubmitScore(SubmitScoreRequest request)
     {
+        logger.LogInformation("SubmitScore attempt for user {UserId} with score {Score}", currentUser.UserId, request.Score);
+
         if (request.Score < 0)
         {
+            logger.LogWarning("SubmitScore failed for user {UserId}: score cannot be negative", currentUser.UserId);
             throw new ArgumentException("Score cannot be negative");
         }
         
@@ -27,12 +30,13 @@ public class DbLeaderboardService(
 
         if (entry == null)
         {
+            logger.LogInformation("Creating new leaderboard entry for user {UserId} with score {Score}", currentUser.UserId, request.Score);
+
             var newEntry = new LeaderboardEntryEntity()
             {
                 UserId = currentUser.UserId,
                 BestScore = request.Score,
                 LastUpdated = DateTime.UtcNow,
-                // SeasonId = leaderboardOptions.Value.CurrentSeasonId
             };
             
             db.LeaderboardEntryEntities.Add(newEntry);
@@ -45,9 +49,17 @@ public class DbLeaderboardService(
         
         if (entry.BestScore < request.Score)
         {
+            logger.LogInformation("Updating best score for user {UserId} from {OldScore} to {NewScore}", 
+                currentUser.UserId, entry.BestScore, request.Score);
+
             entry.BestScore = request.Score;
             entry.LastUpdated = DateTime.UtcNow;
             await db.SaveChangesAsync();
+        }
+        else
+        {
+            logger.LogDebug("Score {Score} not better than existing best score {BestScore} for user {UserId}", 
+                request.Score, entry.BestScore, currentUser.UserId);
         }
         
         return new SubmitScoreResponse
@@ -58,6 +70,8 @@ public class DbLeaderboardService(
 
     public async Task<GlobalLeaderboardResponse> GetGlobalLeaderboard(GlobalLeaderboardRequest request)
     {
+        logger.LogInformation("GetGlobalLeaderboard request with offset {Offset} and limit {Limit}", request.Offset, request.Limit);
+
         if (request.Offset < 0) throw new ArgumentException("Offset cannot be negative");
         if (request.Limit < 0 || request.Limit > _leaderboardOptions.GlobalLeaderboardLimitMaxValue)
             request.Limit = _leaderboardOptions.GlobalLeaderboardLimitMaxValue;
@@ -88,6 +102,8 @@ public class DbLeaderboardService(
             rank++;
         }
         
+        logger.LogInformation("Returning {Count} leaderboard entries", entries.Count);
+
         return new GlobalLeaderboardResponse
         {
             Entries = entries
@@ -96,10 +112,14 @@ public class DbLeaderboardService(
 
     public async Task<MyLeaderboardResponse> GetMyLeaderboard()
     {
+        logger.LogInformation("GetMyLeaderboard request for user {UserId}", currentUser.UserId);
+
         var userEntry = await db.LeaderboardEntryEntities.FirstOrDefaultAsync(entry => entry.UserId == currentUser.UserId);
         
         if (userEntry == null)
         {
+            logger.LogWarning("Leaderboard entry not found for user {UserId}", currentUser.UserId);
+
             return new MyLeaderboardResponse
             {
                 Rank = null,
@@ -110,15 +130,13 @@ public class DbLeaderboardService(
         //fix needed in the future, for cases as User A - 500, User B - 500
         var count = await db.LeaderboardEntryEntities.CountAsync(entry => entry.BestScore > userEntry.BestScore);
         
+        logger.LogInformation("User {UserId} has rank {Rank} with best score {BestScore}", 
+            currentUser.UserId, count + 1, userEntry.BestScore);
+
         return new MyLeaderboardResponse
         {
             Rank = count + 1,
             BestScore = userEntry.BestScore
         };
-    }
-
-    public async Task ResetSeason()
-    {
-        
     }
 }

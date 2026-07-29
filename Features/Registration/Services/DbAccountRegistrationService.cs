@@ -7,6 +7,7 @@ using Nexus.Features.Auth.Jwt;
 using Nexus.Features.Auth.Services;
 using Nexus.Features.CloudSave.Domain;
 using Nexus.Features.CloudSave.Services;
+using Nexus.Features.Inventory.Services;
 using Nexus.Features.Profile.Domain;
 using Nexus.Features.Profile.Dto;
 using Nexus.Features.Registration.Dto;
@@ -20,7 +21,8 @@ public class DbAccountRegistrationService(
     AppDbContext db,
     ILogger<DbAccountRegistrationService> logger,
     IDeviceFactory deviceFactory,
-    ICloudSaveFactory cloudSaveFactory
+    ICloudSaveFactory cloudSaveFactory,
+    IInventoryFactory inventoryFactory
     ) : IAccountRegistrationService
 {
     private readonly DeviceOptions _deviceOptions = deviceOptions.Value;
@@ -57,10 +59,13 @@ public class DbAccountRegistrationService(
 
         var newCloudSave = cloudSaveFactory.CreateCloudSave(newUser.Id);
 
+        var newInventory = inventoryFactory.CreateInventory(newUser.Id);
+
         db.Users.Add(newUser);
         db.Profiles.Add(newProfile);
         db.Devices.Add(newDevice);
         db.CloudSaves.Add(newCloudSave);
+        db.Inventory.Add(newInventory);
         await db.SaveChangesAsync();
         
         logger.LogInformation("Account creation succeeded for user {UserId}", newUser.Id);

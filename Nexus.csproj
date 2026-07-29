@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <Folder Include="Bruno\" />
+    <Folder Include="Features\Analytics\Dto\" />
   </ItemGroup>
 
 </Project>

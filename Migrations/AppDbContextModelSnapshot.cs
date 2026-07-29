@@ -22,6 +22,29 @@ namespace Nexus.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Nexus.Features.Analytics.Domain.PlayerAnalyticsEntity", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CoinsSpent")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ItemsBought")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Purchases")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("PlayerAnalytics");
+                });
+
             modelBuilder.Entity("Nexus.Features.Auth.Domain.DeviceEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -107,6 +130,105 @@ namespace Nexus.Migrations
                     b.ToTable("CloudSaves");
                 });
 
+            modelBuilder.Entity("Nexus.Features.GameEvent.Domain.GameEventEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProcessedAt", "CreatedAt");
+
+                    b.ToTable("GameEvents");
+                });
+
+            modelBuilder.Entity("Nexus.Features.Inventory.Domain.InventoryEntity", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Coins")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Gems")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("Inventory");
+                });
+
+            modelBuilder.Entity("Nexus.Features.Inventory.Domain.InventoryItemEntity", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ItemId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "ItemId");
+
+                    b.ToTable("InventoryItems");
+                });
+
+            modelBuilder.Entity("Nexus.Features.Inventory.Domain.InventoryTransactionEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CurrencyAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CurrencyType")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ItemAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ItemId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Reason")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReferenceId")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.ToTable("InventoryTransactions");
+                });
+
             modelBuilder.Entity("Nexus.Features.Leaderboard.Domain.LeaderboardEntryEntity", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -166,6 +288,46 @@ namespace Nexus.Migrations
                         .IsUnique();
 
                     b.ToTable("Profiles");
+                });
+
+            modelBuilder.Entity("Nexus.Features.Shop.Domain.ShopOfferEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("EndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OfferId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("PriceAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PriceCurrency")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RewardAmount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RewardItemId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("StartsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferId")
+                        .IsUnique();
+
+                    b.ToTable("ShopOffers");
                 });
 #pragma warning restore 612, 618
         }

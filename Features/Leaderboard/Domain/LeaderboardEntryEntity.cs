@@ -6,8 +6,6 @@ namespace Nexus.Features.Leaderboard.Domain;
 public class LeaderboardEntryEntity
 {
     public Guid UserId { get; set; }
-
     public int BestScore { get; set; }
-
     public DateTime LastUpdated { get; set; }
 }
