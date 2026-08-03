@@ -12,7 +12,8 @@ public class DbLeaderboardService(
     AppDbContext db,
     ILogger<DbLeaderboardService> logger,
     ICurrentUser currentUser,
-    IOptions<LeaderboardOptions> leaderboardOptions) : ILeaderboardService
+    IOptions<LeaderboardOptions> leaderboardOptions,
+    ILeaderboardCache cache) : ILeaderboardService
 {
     private readonly LeaderboardOptions _leaderboardOptions = leaderboardOptions.Value;
     
@@ -55,12 +56,16 @@ public class DbLeaderboardService(
             entry.BestScore = request.Score;
             entry.LastUpdated = DateTime.UtcNow;
             await db.SaveChangesAsync();
+            
+            await cache.DeleteGlobalLeaderboard();
         }
         else
         {
             logger.LogDebug("Score {Score} not better than existing best score {BestScore} for user {UserId}", 
                 request.Score, entry.BestScore, currentUser.UserId);
         }
+        
+        
         
         return new SubmitScoreResponse
         {
@@ -76,6 +81,15 @@ public class DbLeaderboardService(
         if (request.Limit < 0 || request.Limit > _leaderboardOptions.GlobalLeaderboardLimitMaxValue)
             request.Limit = _leaderboardOptions.GlobalLeaderboardLimitMaxValue;
 
+        var cachedResponse = await cache.TryGetGlobalLeaderboard(request.Offset, request.Limit);
+
+        if (cachedResponse != null)
+        {
+            logger.LogInformation("Returning cached leaderboard entries");
+            
+            return cachedResponse;
+        }
+        
         var entries = await db.LeaderboardEntryEntities
             .AsNoTracking()
             .OrderByDescending(x => x.BestScore)
@@ -104,10 +118,14 @@ public class DbLeaderboardService(
         
         logger.LogInformation("Returning {Count} leaderboard entries", entries.Count);
 
-        return new GlobalLeaderboardResponse
+        var globalLeaderboardResponse = new GlobalLeaderboardResponse
         {
             Entries = entries
         };
+        
+        await cache.SetGlobalLeaderboard(request.Offset, request.Limit, globalLeaderboardResponse);
+        
+        return globalLeaderboardResponse;
     }
 
     public async Task<MyLeaderboardResponse> GetMyLeaderboard()

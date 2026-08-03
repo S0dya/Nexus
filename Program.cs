@@ -12,6 +12,7 @@ builder.Services
     .AddProjectServices(builder.Configuration)
     .AddAuth(builder.Configuration)
     .AddDatabase(builder.Configuration)
+    .AddRedis(builder.Configuration)
     .AddRateLimiting(builder.Configuration)
     .TimerAddCors();
 
