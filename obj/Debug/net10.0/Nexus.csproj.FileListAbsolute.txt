@@ -133,3 +133,17 @@ D:\Projects\C#\Nexus\obj\Debug\net10.0\refint\Nexus.dll
 D:\Projects\C#\Nexus\obj\Debug\net10.0\Nexus.pdb
 D:\Projects\C#\Nexus\obj\Debug\net10.0\Nexus.genruntimeconfig.cache
 D:\Projects\C#\Nexus\obj\Debug\net10.0\ref\Nexus.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\RESPite.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.AspNetCore.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.Extensions.Hosting.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.Extensions.Logging.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.Formatting.Compact.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.Settings.Configuration.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.Sinks.Console.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.Sinks.Debug.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Serilog.Sinks.File.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\StackExchange.Redis.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\System.IO.Hashing.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\HealthChecks.Redis.dll
+D:\Projects\C#\Nexus\bin\Debug\net10.0\Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore.dll

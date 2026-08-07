@@ -1,3 +1,4 @@
+using Nexus.Database;
 using Nexus.Features.Analytics.Services;
 using Nexus.Features.Auth.CurrentUser;
 using Nexus.Features.Auth.Jwt;
@@ -13,6 +14,7 @@ using Nexus.Features.Registration.Services;
 using Nexus.Features.Shop.Services;
 using Nexus.Infrastructure.Security;
 using Nexus.Options;
+using StackExchange.Redis;
 
 namespace Nexus.Infrastructure.DependencyInjection;
 
@@ -34,6 +36,7 @@ public static class ProjectInjection
         services.AddScoped<ICloudSaveFactory, CloudSaveFactory>();
         services.AddScoped<IInventoryFactory, InventoryFactory>();
         services.AddScoped<IGameEventService, DbGameEventService>();
+        services.AddScoped<IAnalyticsService, DbAnalyticsService>();
         
         services.AddScoped<IDbAuthService, DbAuthService>();
         services.AddScoped<IProfileService, DbProfileService>();
@@ -47,6 +50,10 @@ public static class ProjectInjection
         services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 
         services.AddHostedService<GameEventProcessor>();
+        
+        services.AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>()
+            .AddRedis(sp => sp.GetRequiredService<IConnectionMultiplexer>());
 
         return services;
     }

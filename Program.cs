@@ -3,6 +3,7 @@ using Nexus.Database;
 using Nexus.Infrastructure.DependencyInjection;
 using Nexus.Infrastructure.DependencyInjection.RateLimiting;
 using Nexus.Middlewares;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +17,16 @@ builder.Services
     .AddRateLimiting(builder.Configuration)
     .TimerAddCors();
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console()
+    .WriteTo.File(
+        "logs/nexus-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 7)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10001";
 
@@ -27,7 +36,6 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    // app.MapOpenApi();
     app.UseSwagger(app.Environment);
 }
 
@@ -42,6 +50,8 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
+app.UseSerilogRequestLogging();
+
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseAuthentication();
@@ -50,5 +60,6 @@ app.UseAuthorization();
 app.UseMiddleware<LastOnlineMiddleware>();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();

@@ -1,0 +1,22 @@
+info:
+  name: Health Main
+  type: http
+  seq: 11
+
+http:
+  method: GET
+  url: "{{baseUrl}}/health"
+  auth:
+    type: bearer
+    token: "{{accessToken}}"
+
+runtime:
+  scripts:
+    - type: after-response
+      code: bru.setEnvVar("userName", res.body.username);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
