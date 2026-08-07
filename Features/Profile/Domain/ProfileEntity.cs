@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Nexus.Features.Profile.Domain;
 
-[Index(nameof(UserId), IsUnique = true)] //do i need to index? 
+[Index(nameof(UserId), IsUnique = true)] 
 public class ProfileEntity
 {
     public Guid UserId { get; set; }

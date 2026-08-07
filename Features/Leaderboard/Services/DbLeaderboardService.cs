@@ -31,7 +31,10 @@ public class DbLeaderboardService(
 
         if (entry == null)
         {
-            logger.LogInformation("Creating new leaderboard entry for user {UserId} with score {Score}", currentUser.UserId, request.Score);
+            logger.LogInformation(
+                "Creating new leaderboard entry for user {UserId} with score {Score}",
+                currentUser.UserId,
+                request.Score);
 
             var newEntry = new LeaderboardEntryEntity()
             {
@@ -39,10 +42,12 @@ public class DbLeaderboardService(
                 BestScore = request.Score,
                 LastUpdated = DateTime.UtcNow,
             };
-            
+
             db.LeaderboardEntryEntities.Add(newEntry);
             await db.SaveChangesAsync();
-            
+
+            await cache.InvalidateGlobalLeaderboard();
+
             return new SubmitScoreResponse
             {
             };
@@ -57,7 +62,7 @@ public class DbLeaderboardService(
             entry.LastUpdated = DateTime.UtcNow;
             await db.SaveChangesAsync();
             
-            await cache.DeleteGlobalLeaderboard();
+            await cache.InvalidateGlobalLeaderboard();
         }
         else
         {
@@ -65,11 +70,8 @@ public class DbLeaderboardService(
                 request.Score, entry.BestScore, currentUser.UserId);
         }
         
-        
-        
         return new SubmitScoreResponse
         {
-            // BestScore = entry.BestScore
         };
     }
 

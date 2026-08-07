@@ -37,13 +37,4 @@ public class LeaderboardController(ILeaderboardService leaderboardService) : Con
         var response = await leaderboardService.GetMyLeaderboard();
         return Ok(response);
     }
-
-    [EnableRateLimiting(RateLimitPolicies.Writes)]
-    [HttpPost("season/reset")]
-    [Authorize]
-    public async Task<ActionResult> ResetSeason()
-    {
-        // await leaderboardService.ResetSeason();
-        return Ok();
-    }
 }

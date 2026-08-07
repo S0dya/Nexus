@@ -6,5 +6,5 @@ public interface ILeaderboardCache
 {
     Task SetGlobalLeaderboard(int offset, int limit, GlobalLeaderboardResponse response);
     Task<GlobalLeaderboardResponse?> TryGetGlobalLeaderboard(int offset, int limit);
-    Task DeleteGlobalLeaderboard();
+    Task InvalidateGlobalLeaderboard();
 }
