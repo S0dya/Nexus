@@ -46,6 +46,9 @@ public class GameEventProcessor(
                     await db.SaveChangesAsync(stoppingToken);
                 }
             }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error processing game events");

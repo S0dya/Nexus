@@ -31,4 +31,10 @@
     <Folder Include="Features\Analytics\Dto\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Nexus.Tests\**" />
+    <EmbeddedResource Remove="Nexus.Tests\**" />
+    <None Remove="Nexus.Tests\**" />
+  </ItemGroup>
+
 </Project>
