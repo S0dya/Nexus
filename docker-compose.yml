@@ -1,0 +1,39 @@
+services:
+  nexus:
+    build: .
+    ports:
+      - "10001:10001"
+    environment:
+      PORT: 10001
+
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=nexus_db;Username=postgres;Password=admin"
+
+      Jwt__Secret: "${JWT_SECRET}"
+
+      Redis__ConnectionString: "redis:6379"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: nexus_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d nexus_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+
+volumes:
+  postgres_data:

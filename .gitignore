@@ -29,6 +29,7 @@ bld/
 
 # Logs
 logs/
+.env
 *.log
 
 # IDE
