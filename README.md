@@ -1,304 +1,210 @@
 # Nexus
 
-A scalable, production-ready game backend API built with ASP.NET Core. Designed as a generic backend solution that can be adapted for different game types, this project demonstrates real-world backend architecture patterns and best practices.
+Nexus is a game backend built with ASP.NET Core and PostgreSQL. I built it for my own Unity projects and targeted it to contain what a real game client needs: login, player data, cloud saves, progression, inventory, a shop, leaderboards, analytics, and event handling.
 
-## 🎯 Project Overview
+## What's in it
 
-Nexus was built with two primary goals:
-1. **Create a flexible game backend** that handles authentication, player data, leaderboards, inventory, and monetization
-2. **Learn production-grade development** by implementing systems in a real-world context with proper architecture, testing, and deployment considerations
+- **Auth** - JWT access and refresh tokens, logout/revocation, anonymous accounts, and linking a guest account to a real one once the player signs up.
+- **Devices** - each device gets its own refresh token and expiration, so a player logged in on two phones has two independent sessions the server can tell apart and revoke separately.
+- **Player profiles** - display name, icon, bio, country, level, XP, last time seen online.
+- **Cloud saves** - versioned, with optimistic concurrency so an old client can't silently stomp on a newer save.
+- **Leaderboards** - score submission, personal bests, ranking, pagination, deterministic tie-breaking, Redis caching on top.
+- **Inventory** - currencies and items live as real database entities, not as a blob of JSON tucked into the save file.
+- **Shop** - time-limited offers, purchases run through the inventory system inside a single DB transaction.
+- **Inventory audit** - every currency and item change gets a record with a reason and a reference ID, so you can actually trace where something came from.
+- **Game events** - events get written first and processed later, asynchronously, in batches.
+- **Analytics** - built around a generic event shape, so a new event type doesn't need a new table or a migration.
+- **Health and observability** - health checks, structured logging with Serilog, one place that handles exceptions.
+- **Rate limiting** - separate limits for auth, reads and writes.
+- **Integration tests** - real API-level tests via `WebApplicationFactory`.
+- **Docker** - API, PostgreSQL and Redis all containerized for a reproducible local setup.
 
-## ✨ Features
+## How it's structured
 
-### 🔐 Authentication System
-- **JWT-based authentication** with access and refresh tokens
-- **Multi-device support** - users can authenticate from multiple devices simultaneously
-- **Device management** with configurable expiry (default 180 days)
-- **Token revocation** for secure logout
-- **Password validation** with BCrypt hashing
-- **Anonymous-to-registered user flow** support
+Feature-based folders:
 
-### 👤 Player Profiles
-- Customizable player profiles with bio, display name
-- Avatar/icon system with configurable range
-- Last online tracking with automatic updates
-- Profile isolation per user
+```text
+Features/
+├── Auth/
+├── Profile/
+├── CloudSave/
+├── Leaderboard/
+├── Inventory/
+├── Shop/
+├── GameEvent/
+├── Analytics/
+└── Registration/
 
-### 💾 Cloud Save System
-- Simple string-based cloud storage
-- Automatic save creation on account registration
-- Per-user data isolation
-- Easy integration with game clients
+Infrastructure/
+├── DependencyInjection/
+├── Exceptions/
+└── Security/
 
-### 🏆 Leaderboard System
-- **Global leaderboard** with configurable entry limits
-- **Score submission** with validation
-- **Personal best tracking** per player
-- **Rank calculation** with efficient queries
-- **Pagination support** for large datasets
-- **Tie-breaking** using LastUpdated timestamp
-- **Season-ready architecture** with SeasonId field for future seasonal leaderboards
-- **Redis caching** for improved performance (30-second cache)
-
-### 🎒 Inventory System
-- **Multi-currency support** (Coins, Gems)
-- **Item ownership tracking** with dedicated item table
-- **Currency operations** - grant, spend, and balance checks
-- **Item operations** - grant, remove, and ownership verification
-- **Default starting currency** configuration
-- **Business logic separation** in dedicated services
-- **Database consistency** through proper transactions
-
-### 🛒 Shop System
-- **Dynamic shop offers** with start/end date validation
-- **Offer enable/disable functionality**
-- **Purchase orchestration** - shop coordinates with inventory
-- **Transaction boundaries** for data consistency
-- **Service-to-service communication** patterns
-- **DTO mapping** for clean API responses
-
-### 📊 Inventory Audit
-- **Complete transaction history** for all inventory changes
-- **Currency transaction records** with amounts and balances
-- **Item transaction records** for grants/removals
-- **Transaction reason enum** for categorization
-- **ReferenceId support** for linking to external systems
-- **Production debugging** capabilities through audit trails
-
-### 🎮 Game Events
-- **Event ingestion system** for tracking player actions
-- **Batch processing** with configurable batch size (default: 100)
-- **Background worker** for async event processing
-- **Shop purchase tracking** through event payloads
-- **Configurable processing intervals** (default: 60 seconds)
-
-### 📈 Analytics
-- **Player analytics tracking** per user
-- **Session data** with duration and metadata
-- **Configurable session parameters** (min/max duration, amounts)
-- **Run history** with configurable limits
-
-## 🛠 Tech Stack
-
-### Core Framework
-- **ASP.NET Core 10.0** - Web framework
-- **Entity Framework Core 10.0** - ORM
-- **PostgreSQL** - Primary database (via Npgsql)
-- **Redis** - Caching layer (via StackExchange.Redis)
-
-### Authentication & Security
-- **JWT Bearer Authentication** - Token-based auth
-- **BCrypt.Net-Next** - Password hashing
-- **Serilog** - Structured logging
-
-### API & Documentation
-- **Swagger/OpenAPI** - API documentation
-- **Bruno** - API testing (alternative to Swagger)
-
-### Monitoring & Health
-- **ASP.NET Core Health Checks** - Health monitoring
-- **EF Core Health Checks** - Database health
-- **Redis Health Checks** - Cache health
-
-### Testing
-- **xUnit** - Testing framework
-- **Integration tests** with WebApplicationFactory
-
-## 🏗 Architecture
-
-### Project Structure
-```
-Nexus/
-├── Features/              # Feature-based organization
-│   ├── Auth/             # Authentication & device management
-│   ├── Profile/          # Player profiles
-│   ├── CloudSave/        # Cloud save system
-│   ├── Leaderboard/      # Leaderboard with caching
-│   ├── Inventory/        # Inventory & currency management
-│   ├── Shop/             # Shop offers & purchases
-│   ├── GameEvent/        # Event processing
-│   └── Analytics/        # Player analytics
-├── Infrastructure/       # Cross-cutting concerns
-│   ├── DependencyInjection/  # DI configuration
-│   ├── Exceptions/       # Custom exceptions
-│   └── Security/         # Security utilities
-├── Middlewares/          # ASP.NET Core middleware
-│   ├── GlobalExceptionMiddleware.cs
-│   └── LastOnlineMiddleware.cs
-├── Database/            # EF Core context
-│   └── AppDbContext.cs
-├── Migrations/          # Database migrations
-├── Options/             # Configuration options
-└── Nexus.Tests/         # Integration tests
+Database/
+Middlewares/
+Options/
+Tests/
 ```
 
-### Design Patterns
-- **Feature-based architecture** - Each feature is self-contained
-- **Repository pattern** via EF Core DbContext
-- **Service layer pattern** - Business logic in dedicated services
-- **DTO pattern** - Clean API contracts
-- **Factory pattern** - Entity creation (DeviceFactory, CloudSaveFactory)
-- **Middleware pipeline** - Cross-cutting concerns
-- **Dependency Injection** - Loose coupling and testability
+Controllers stay thin on purpose - they just handle the HTTP side and hand everything off to a service.
 
-### Key Architectural Decisions
-- **Items as separate table** - Better query performance vs JSON storage
-- **Currencies in inventory** - Separated from cloud save for consistency
-- **Audit logging** - Every inventory change leaves evidence
-- **Service boundaries** - Shop orchestrates, Inventory owns logic
-- **Season support** - Built into leaderboard from the start
-- **Redis caching** - Leaderboard caching for performance
-
-## 📚 What I Learned
-
-### Backend Architecture
-- **Service layer separation** - Business logic belongs in services, not controllers
-- **Transaction boundaries** - Managing data consistency across operations
-- **Service-to-service communication** - Clean interaction between features
-- **Reusable business services** - DRY principle in action
-
-### Database Design
-- **Entity relationships** - One-to-one, one-to-many patterns
-- **Indexing strategies** - Efficient query performance
-- **DTO projection** - Select only needed data
-- **Migration management** - EF Core migrations workflow
-- **Why items deserve their own table** - Performance vs JSON trade-offs
-
-### Authentication & Security
-- **JWT token lifecycle** - Generation, validation, revocation
-- **Multi-device authentication** - Device tracking and management
-- **Password hashing** - BCrypt for security
-- **Token refresh patterns** - Balancing security and UX
-
-### Performance Optimization
-- **Redis caching** - Reducing database load
-- **Pagination** - Handling large datasets efficiently
-- **Efficient queries** - Proper LINQ usage and indexing
-- **Background processing** - Async event processing
-
-### Production Considerations
-- **Audit logging** - Traceability and debugging
-- **Health checks** - Monitoring system health
-- **Structured logging** - Serilog for production logs
-- **Exception handling** - Global middleware for consistency
-- **Configuration management** - appsettings patterns
-
-### Testing
-- **Integration testing** - WebApplicationFactory usage
-- **API testing** - Bruno for endpoint testing
-- **Test isolation** - Clean test setup/teardown
-
-## 🚀 Getting Started
-
-### Prerequisites
-- .NET 10.0 SDK
-- PostgreSQL 14+
-- Redis 7+
-- (Optional) Bruno for API testing
-
-### Configuration
-
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd Nexus
+```text
+HTTP Request
+    ↓
+Controller
+    ↓
+Service
+    ↓
+EF Core / Redis
+    ↓
+PostgreSQL
 ```
 
-2. **Configure appsettings.json**
-```json
+Features talk to each other through service interfaces, not by reaching into each other's data directly. A shop purchase, for example, doesn't reimplement inventory logic itself:
+
+```text
+Shop
+ ├── validates offer
+ ├── starts transaction
+ ├── InventoryService.SpendCurrency()
+ ├── InventoryService.GrantItem()
+ └── writes audit records
+```
+
+The feature that owns a rule is the only one allowed to change it.
+
+## A few decisions worth explaining
+
+**Cloud save vs inventory.** Cloud save is opaque, whatever blob the client sends up. Inventory is not - currencies and items are real relational data, because the server needs to validate and change them on its own, and because purchases and audit logging need to be transactional. Mixing the two would mean either trusting the client's save blob for economy data, or splitting logic across two different storage models for no reason.
+
+**Optimistic concurrency on saves.** Every save carries a version number. The client sends back the version it last received, and the server only accepts the write if that still matches what's stored.
+
+```text
+Client v5
+    ↓
+Server v5 → accept → Server v6
+
+Client v5
+    ↓
+Server v6 → reject → conflict
+```
+
+
+**Where transactions start and end.** A purchase touches three things - spend currency, grant item, write the audit record - and all three live in one transaction. If any step fails, the whole thing rolls back. The shop owns the transaction because the purchase is its business operation; inventory just owns the actual mutations.
+
+**Why there's an audit trail at all.** Inventory changes aren't throwaway state. Every purchase or currency/item change leaves a record with a reason, an amount, and a reference ID, so questions like "why does this player have this much gold" or "which offer granted this item" actually have an answer. 
+
+**Leaderboards.** Queries are paginated and ordered at the database level - nothing gets pulled fully into memory. Redis caches results for a short time, with some jitter on the expiry so a wall of cache entries doesn't all expire at once.
+
+**Analytics is deliberately generic.** Events are stored separately from whatever feature generated them, using a generic shape - event type, user, timestamp, and a serialized JSON payload - that adding a new event type doesn't mean a new table or migration. Events get written immediately and processed later by a background worker in batches, so a request never has to wait on analytics work.
+
+```csharp
+[Index(nameof(UserId), IsUnique = true)]
+public class PlayerAnalyticsEntity
 {
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=nexus_db;Username=postgres;Password=your_password"
-  },
-  "Jwt": {
-    "Secret": "your-secret-key",
-    "Issuer": "nexus",
-    "Audience": "GameClient",
-    "ExpirationMinutes": 60
-  },
-  "Redis": {
-    "ConnectionString": "localhost:6379",
-    "DatabaseId": 0,
-    "LeaderboardCacheSeconds": 30
-  }
+    public Guid UserId {get; set; }
+    public int Purchases {get; set; }
+    public int CoinsSpent {get; set; }
+    public int ItemsBought {get; set; }
 }
 ```
 
-3. **Run database migrations**
-```bash
-dotnet ef database update
+Event processing with pattern matching:
+```csharp
+switch (gameEvent.Type)
+{
+    case GameEventType.ShopPurchase:
+        var payload = JsonSerializer.Deserialize<ShopPurchasePayload>(gameEvent.Payload);
+        analytics.Purchases++;
+        analytics.CoinsSpent += payload.CurrencySpent;
+        analytics.ItemsBought += payload.ItemAmount;
+        break;
+    default: 
+        throw new NotImplementedException($"Analytics doesn't support {gameEvent.Type}");
+}
 ```
 
-4. **Start Redis**
-```bash
-redis-server
+## Auth flow
+
+Both real accounts and guest accounts are supported:
+
+```text
+Anonymous
+    ↓
+Guest account
+    ↓
+Play
+    ↓
+Link account
+    ↓
+Registered account
 ```
 
-5. **Run the application**
-```bash
-dotnet run
+Refresh tokens belong to a device, not just a user, so a player can be logged in on multiple devices with independent sessions, and any one of them can be revoked without touching the others. Passwords are hashed with BCrypt, and secrets like JWT keys and DB credentials come from config, never from the repo.
+
+## The less glamorous, more important stuff
+
+Things that are easy to skip in a hobby API but matter once it's a real service:
+
+* Global exception middleware, so errors come back consistent.
+
+```csharp
+public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
+{
+    public async Task InvokeAsync(HttpContext context)
+    {
+        try
+        {
+            await next(context);
+        }
+        catch (ApiException ex)
+        {
+            context.Response.StatusCode = ex.StatusCode;
+            await HandleExceptionAsync(context, ex.Message);
+        }
+        catch (Exception ex)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            await HandleExceptionAsync(context, "Internal server error");
+        }
+    }
+}
 ```
 
-The API will be available at `http://localhost:10001` (or configured PORT).
+* Serilog instead of `Console.WriteLine`.
+* Health checks for dependencies.
+* Rate limiting, split by auth/read/write.
+* Optimistic concurrency on saves.
+* Transactions for anything multi-step.
+* Audit history on player-state changes.
+* Integration tests that hit real HTTP behavior.
 
-### Running Tests
-```bash
-dotnet test
+## Testing
+
+Integration tests via `WebApplicationFactory`, aimed at the whole request pipeline rather than isolated methods:
+
+```text
+HTTP request
+    ↓
+Middleware
+    ↓
+Authentication
+    ↓
+Controller
+    ↓
+Service
+    ↓
+Database / Redis
 ```
 
-## 📡 API Endpoints
+I also used Bruno day-to-day for manually poking at endpoints while building.
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login with credentials
-- `POST /api/auth/refresh` - Refresh access token
-- `POST /api/auth/logout` - Revoke tokens
-- `GET /api/auth/me` - Get current user info
+## Stack
 
-### Profile
-- `GET /api/profile` - Get player profile
-- `PUT /api/profile` - Update player profile
+C#, ASP.NET Core 10, EF Core 10, PostgreSQL, Redis / StackExchange.Redis, JWT bearer auth, BCrypt, Serilog, xUnit, ASP.NET Core integration testing, Docker / Docker Compose, Bruno, OpenAPI / Swagger.
 
-### Cloud Save
-- `GET /api/cloudsave` - Load saved data
-- `POST /api/cloudsave` - Save game data
+## What this project actually taught me
 
-### Leaderboard
-- `GET /api/leaderboard` - Get global leaderboard (paginated)
-- `POST /api/leaderboard/score` - Submit score
-- `GET /api/leaderboard/rank/{userId}` - Get player rank
+The point was never "learn technology X." It was figuring out how these pieces fit together when you're building around what a real game needs, not around a tutorial. That meant working through: where a service boundary should sit and who owns a given rule, relational modeling and migrations, keeping things consistent across multi-step operations, session and device management, caching and when to invalidate it, background processing for anything that shouldn't block a request, validation and rate limiting and centralized error handling, integration testing actual API flows, config/secrets.
 
-### Inventory
-- `GET /api/inventory` - Get player inventory
-- `POST /api/inventory/currency/grant` - Grant currency
-- `POST /api/inventory/currency/spend` - Spend currency
-- `POST /api/inventory/item/grant` - Grant item
-- `POST /api/inventory/item/remove` - Remove item
-- `POST /api/inventory/item/has` - Check item ownership
-
-### Shop
-- `GET /api/shop/offers` - Get all available offers
-- `GET /api/shop/offers/{id}` - Get specific offer
-- `POST /api/shop/purchase` - Purchase offer
-
-### Health
-- `GET /health` - Health check endpoint
-
-## 🔮 Future Enhancements
-
-- [ ] Complete seasonal leaderboard implementation
-- [ ] Add more analytics events and metrics
-- [ ] Implement push notifications
-- [ ] Add guild/clan system
-- [ ] Real-time multiplayer support
-- [ ] Advanced anti-cheat measures
-- [ ] CDN integration for assets
-- [ ] A/B testing framework
-
-## 📝 License
-
-This project is for portfolio and educational purposes.
-
-## 👤 Author
-
-Built as a portfolio project to demonstrate production-ready backend development skills with ASP.NET Core, focusing on real-world game backend requirements and best practices.
+Nexus isn't finished in the sense of "done" - it's meant to keep growing as I plug it into future Unity projects. Right now it's a solid general foundation, not a checklist of every backend feature that could exist.
